@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Crop Shield</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f7f1;color:#20352a}
+header{background:#17683c;color:white;padding:25px 18px;border-radius:0 0 22px 22px}
+header h1{margin:8px 0;font-size:27px}
+header p{line-height:1.5}
+main{max-width:800px;margin:auto;padding:14px}
+.card{background:white;padding:18px;margin:14px 0;border-radius:16px;box-shadow:0 3px 12px #00000009}
+h2{font-size:19px;margin:0 0 15px}
+p{line-height:1.5}
+.small{font-size:13px;color:#65756a}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0}
+button,select{padding:12px;border:1px solid #d3e2d5;border-radius:10px;font-size:14px;font-weight:bold}
+button{cursor:pointer}
+button:disabled{opacity:.45}
+button.active,.primary{background:#197744;color:white}
+.modes,.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.open{background:#e5f6e9;color:#17683b}
+.close{background:#fff0df;color:#8a4c0a}
+.blue{background:#e7f2ff;color:#155a96}
+.badge{padding:7px 10px;border-radius:20px;background:#e5f6e9;color:#17683b;font-size:12px;font-weight:bold}
+.warn{background:#fff0dc;color:#8b4b05}
+.big{font-size:32px;font-weight:bold}
+.track{height:13px;background:#e5ece7;border-radius:20px;overflow:hidden;margin:12px 0}
+.fill{height:100%;width:25%;background:#249452;transition:width .2s}
+input[type=range]{width:100%;accent-color:#21804a}
+select{width:100%;background:white}
+.weather{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.weather div{background:#f2f7f3;padding:12px 5px;border-radius:12px;text-align:center}
+.weather strong{display:block;font-size:18px;margin-top:8px}
+.weather span{font-size:12px;color:#66766b}
+.advice{background:#eaf4ff;padding:12px;border-radius:10px;font-size:14px}
+footer{text-align:center;color:#65756a;font-size:12px;padding:20px}
+@media(max-width:380px){header h1{font-size:23px}.card{padding:13px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>🌿 SMART FARMING PROJECT</div>
+  <h1>Smart Crop Shield</h1>
+  <p>Smart crop protection with water monitoring and weather awareness.</p>
+</header>
+
+<main>
+<section class="card">
+<h2>⚙️ Operating Mode</h2>
+<div class="modes">
+<button id="manualBtn" class="active" onclick="setMode('manual')">✋ Manual</button>
+<button id="autoBtn" onclick="setMode('auto')">🤖 Automatic</button>
+</div>
+<p id="modeInfo" class="small">Manual mode: use the buttons to control the shield.</p>
+<div class="buttons">
+<button id="openBtn" class="open" onclick="moveShield('open')">↗ Open Shield</button>
+<button id="closeBtn" class="close" onclick="moveShield('closed')">↙ Close Shield</button>
+</div>
+</section>
+
+<section class="card">
+<div class="row">
+<h2>🛡️ Shield Status</h2>
+<span id="shieldBadge" class="badge">OPEN</span>
+</div>
+<div class="row"><span>Position</span><strong id="shieldText">Open</strong></div>
+<div class="row"><span>Mode</span><strong id="modeText">Manual</strong></div>
+<div class="row"><span>Last action</span><strong id="lastAction">System started</strong></div>
+</section>
+
+<section class="card">
+<h2>💧 Current Water Level</h2>
+<div class="row">
+<span class="small">Demo sensor reading</span>
+<span id="waterBadge" class="badge">NORMAL</span>
+</div>
+<div class="big"><span id="waterText">25</span>%</div>
+<div class="track"><div id="waterFill" class="fill"></div></div>
+<div class="row small"><span>0% Low</span><span>100% High</span></div>
+<label for="waterSlider">Test water level</label>
+<input id="waterSlider" type="range" min="0" max="100" value="25" oninput="changeWater(this.value)">
+<p class="small">Move the slider to simulate a water sensor.</p>
+</section>
+
+<section class="card">
+<h2>🎚️ Farmer Water Threshold</h2>
+<div class="row">
+<span>Automatic action limit</span>
+<strong><span id="thresholdText">60</span>%</strong>
+</div>
+<input id="thresholdSlider" type="range" min="10" max="90" value="60" oninput="changeThreshold(this.value)">
+<div class="row small"><span>10%</span><span>90%</span></div>
+<p id="thresholdInfo" class="advice">Threshold is 60%.</p>
+<p class="small">Demo rule: at the threshold the shield closes; when water drops 10 percentage points below it, the shield opens.</p>
+</section>
+
+<section class="card">
+<h2>🌦️ Weather Options</h2>
+<p class="small">Sample weather values only; not a live forecast.</p>
+<label for="weatherSelect">Weather condition</label>
+<select id="weatherSelect" onchange="updateWeather()">
+<option value="clear">☀️ Clear</option>
+<option value="cloudy">☁️ Cloudy</option>
+<option value="rain" selected>🌧️ Rain likely</option>
+<option value="storm">⛈️ Storm warning</option>
+<option value="hot">🔥 Very hot</option>
+</select>
+
+<div class="weather" style="margin-top:14px">
+<div>🌡️<span>Temperature</span><strong id="temp">24°C</strong></div>
+<div>💧<span>Humidity</span><strong id="humidity">82%</strong></div>
+<div>🌧️<span>Rain chance</span><strong id="rain">75%</strong></div>
+</div>
+
+<label for="cropSelect">Crop stage</label>
+<select id="cropSelect" onchange="updateWeather()">
+<option>Seedling</option>
+<option selected>Growing</option>
+<option>Flowering</option>
+<option>Near harvest</option>
+</select>
+<p id="weatherAdvice" class="advice">Rain is likely. Check the water level and drainage.</p>
+</section>
+
+<section class="card">
+<h2>🧪 Demo Testing</h2>
+<div class="buttons">
+<button class="blue" onclick="simulateHigh()">Test High Water</button>
+<button onclick="resetDemo()">Reset Demo</button>
+</div>
+<p id="testMessage" class="small">Ready to test.</p>
+</section>
+
+<footer>
+Smart Crop Shield | Student Project Prototype<br>
+Hardware and live weather integration are required for real-world operation.
+</footer>
+</main>
+
+<script>
+let mode="manual";
+let shield="open";
+let water=25;
+let threshold=60;
+let lastAction="System started";
+
+function setMode(value){
+ mode=value;
+ lastAction=value==="auto"?"Automatic mode selected":"Manual mode selected";
+ if(mode==="auto") runAutomatic();
+ render();
+}
+
+function moveShield(position){
+ if(mode!=="manual") return;
+ shield=position;
+ lastAction=position==="open"?"Manual open command":"Manual close command";
+ render();
+}
+
+function changeWater(value){
+ water=Number(value);
+ if(mode==="auto") runAutomatic();
+ render();
+}
+
+function changeThreshold(value){
+ threshold=Number(value);
+ if(mode==="auto") runAutomatic();
+ render();
+}
+
+function runAutomatic(){
+ if(water>=threshold && shield!=="closed"){
+  shield="closed";
+  lastAction="Threshold reached: shield closed";
+ }
+ else if(water<=Math.max(0,threshold-10) && shield!=="open"){
+  shield="open";
+  lastAction="Water decreased: shield opened";
+ }
+}
+
+function render(){
+ document.getElementById("manualBtn").classList.toggle("active",mode==="manual");
+ document.getElementById("autoBtn").classList.toggle("active",mode==="auto");
+
+ document.getElementById("modeInfo").textContent=mode==="manual"
+ ?"Manual mode: use the buttons to control the shield."
+ :"Automatic demo: the water threshold controls the shield.";
+
+ document.getElementById("openBtn").disabled=mode!=="manual";
+ document.getElementById("closeBtn").disabled=mode!=="manual";
+
+ document.getElementById("modeText").textContent=mode==="manual"?"Manual":"Automatic";
+ document.getElementById("shieldText").textContent=shield==="open"?"Open":"Closed";
+ document.getElementById("shieldBadge").textContent=shield.toUpperCase();
+ document.getElementById("lastAction").textContent=lastAction;
+
+ document.getElementById("waterText").textContent=water;
+ document.getElementById("waterSlider").value=water;
+ document.getElementById("waterFill").style.width=water+"%";
+ document.getElementById("waterBadge").textContent=water>=threshold?"HIGH":water<=25?"LOW":"NORMAL";
+ document.getElementById("waterBadge").className="badge"+(water>=threshold?" warn":"");
+
+ document.getElementById("thresholdText").textContent=threshold;
+ document.getElementById("thresholdSlider").value=threshold;
+ document.getElementById("thresholdInfo").textContent=
+ water>=threshold
+ ? "Water is at or above the selected threshold."
+ : "Water is currently below the selected threshold.";
+}
+
+function updateWeather(){
+ const weather=document.getElementById("weatherSelect").value;
+ const crop=document.getElementById("cropSelect").value;
+
+ const data={
+ clear:{t:31,h:42,r:5,text:"Clear conditions. Check soil moisture and irrigate when needed."},
+ cloudy:{t:27,h:68,r:25,text:"Cloudy conditions. Check the forecast before watering."},
+ rain:{t:24,h:82,r:75,text:"Rain is likely. Monitor water level and keep drainage clear."},
+ storm:{t:23,h:88,r:95,text:"Storm demo selected. Secure the prototype and follow official local weather alerts."},
+ hot:{t:38,h:30,r:0,text:"Hot conditions. Monitor crop moisture and provide suitable shade or irrigation."}
+ };
+
+ const d=data[weather];
+ document.getElementById("temp").textContent=d.t+"°C";
+ document.getElementById("humidity").textContent=d.h+"%";
+ document.getElementById("rain").textContent=d.r+"%";
+
+ const cropAdvice={
+ "Seedling":" Seedlings need careful moisture monitoring.",
+ "Growing":" Monitor water and drainage regularly.",
+ "Flowering":" Avoid sudden moisture stress where possible.",
+ "Near harvest":" Follow crop-specific harvest and moisture guidance."
+ };
+
+ document.getElementById("weatherAdvice").textContent=d.text+cropAdvice[crop];
+}
+
+function simulateHigh(){
+ water=Math.min(100,threshold+15);
+ if(mode==="auto") runAutomatic();
+ document.getElementById("testMessage").textContent=
+ mode==="auto"?"High water simulated; automatic rule applied.":"High water simulated. Select Automatic mode to test automatic control.";
+ render();
+}
+
+function resetDemo(){
+ mode="manual";
+ shield="open";
+ water=25;
+ threshold=60;
+ lastAction="Demo reset";
+ document.getElementById("testMessage").textContent="Demo reset to default settings.";
+ render();
+ updateWeather();
+}
+
+render();
+updateWeather();
+</script>
+</body>
+</html>
